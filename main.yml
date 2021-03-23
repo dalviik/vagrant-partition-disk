@@ -1,0 +1,68 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+
+  - name: Create partition 6GiB
+    parted:
+      device: /dev/sdb
+      number: 1
+      state: present
+      part_start: 2MiB
+      part_end: 6GiB
+
+  - name: Format the disk partition
+    filesystem:
+      fstype: ext4
+      dev: /dev/sdb1
+  
+  - name: Create new directory
+    file:
+      path: /mnt/sdb1
+      state: directory
+      mode: '0755'
+
+  - name: Mount new partition
+    mount:
+      path: /mnt/sdb1
+      src: /dev/sdb1
+      fstype: ext4
+      state: mounted
+
+  - name: Install dependencies
+    apt:
+        name:
+        - apt-transport-https
+        - ca-certificates 
+        - curl 
+        - gnupg-agent
+        - software-properties-common
+
+  - name: add apt-key
+    apt_key:
+      url: https://download.docker.com/linux/ubuntu/gpg
+
+  - name: add docker repo
+    apt_repository:
+      repo: deb https://download.docker.com/linux/ubuntu focal stable
+
+  - name: Install docker 
+    apt:
+      name: 
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      update_cache: yes
+
+  - name: add userpermissions
+    shell: "usermod -aG docker vagrant"
+  
+  - name: Restart service docker
+    ansible.builtin.systemd:
+      state: restarted
+      daemon_reload: yes
+      name: docker
+
+  - name: Run Docker Container Hello World    
+    shell: |
+      docker run -it --rm -d -p 8080:80 --name web nginx
