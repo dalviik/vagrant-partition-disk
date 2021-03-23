@@ -29,7 +29,7 @@
       fstype: ext4
       state: mounted
 
-  - name: Install dependencies
+  - name: Install Basic Packages
     apt:
         name:
         - apt-transport-https
@@ -65,4 +65,4 @@
 
   - name: Run Docker Container Hello World    
     shell: |
-      docker run -it --rm -d -p 8080:80 --name web nginx
+      docker run hello-world
